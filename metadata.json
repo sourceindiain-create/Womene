@@ -1,0 +1,6 @@
+{
+  "name": "WOMENE - People Near You. Always",
+  "description": "WOMENE full-stack platform: Multi-species AI Doctor (human, animal, bird, plant, crop, soil), Government Agri Apps suite, World-Wide AI Library (Magazines & Books), Flutter cross-platform mobile studio, and local community care.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

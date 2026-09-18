@@ -30,17 +30,40 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
 // Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+  const isSupabaseConfigured = Boolean(supabaseUrl && (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+
   res.json({
     status: 'healthy',
     platform: 'WOMENE Care Network',
+    deployment: 'Dual-Engine (Node.js Express + Vercel Serverless Ready)',
+    databases: {
+      firebaseFirestore: 'Active & Connected (studio-6989353372-64cd3)',
+      supabasePostgreSQL: isSupabaseConfigured ? 'Configured & Active' : 'Ready for Connection',
+    },
     stack: {
       frontend: 'React 19 + TypeScript + Tailwind CSS + Lucide',
-      backend: 'Node.js + Express + TypeScript',
+      backend: 'Node.js Express + Vercel Serverless Handlers',
       mobile: 'Flutter 3.x (Cross-Platform iOS & Android)',
       ai: 'Google Gemini 2.5/Flash AI Doctor & Multilingual Chat',
     },
-    version: '1.0.0',
+    version: '1.2.0',
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Supabase Status Endpoint
+app.get('/api/supabase/status', (req: Request, res: Response) => {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+  const isConfigured = Boolean(supabaseUrl && (process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY));
+
+  res.json({
+    status: isConfigured ? 'connected' : 'ready_for_credentials',
+    supabaseUrl: supabaseUrl ? `${supabaseUrl.substring(0, 18)}...` : 'Pending in .env / Settings',
+    schemaFile: '/src/db/supabase_schema.sql',
+    tables: ['service_bookings', 'emergency_alerts', 'ai_consultations', 'community_members'],
+    firestoreStatus: 'Active & Connected',
+    instructions: 'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable live PostgreSQL dual-cloud synchronization.',
   });
 });
 

@@ -15,6 +15,8 @@ import {
 import { Language } from '../types';
 import { translations } from '../translations';
 import { companyDetails } from '../data/servicesData';
+import { saveEmergencyAlertToFirestore } from '../lib/firebase';
+import { saveEmergencyAlertToSupabase } from '../lib/supabase';
 
 interface EmergencySosModalProps {
   isOpen: boolean;
@@ -71,6 +73,37 @@ export const EmergencySosModal: React.FC<EmergencySosModalProps> = ({
         ? `SOS अलर्ट भेजा गया! 4 किमी के भीतर निकटतम WOMENE प्रतिनिधियों को सूचित कर दिया गया है (स्थान: ${lat.toFixed(4)}, ${lng.toFixed(4)})।`
         : `SOS Dispatched! Nearest verified WOMENE responders within 4 km alerted with GPS coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)}).`
     );
+
+    // Save to Firebase Firestore & Supabase PostgreSQL (Dual Cloud Sync)
+    saveEmergencyAlertToFirestore({
+      userName: 'Emergency User',
+      phone: companyDetails.whatsAppNumber || '7989997015',
+      emergencyType: 'High-Priority Safety SOS',
+      locationLat: lat,
+      locationLng: lng,
+      addressText: `GPS Pin: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+      status: 'active',
+      createdAt: new Date().toISOString(),
+    }).then((res) => {
+      if (res.success) {
+        console.log('Emergency alert logged to Firestore with ID:', res.id);
+      }
+    });
+
+    saveEmergencyAlertToSupabase({
+      sos_code: `SOS-${Math.floor(1000 + Math.random() * 9000)}`,
+      user_name: 'Emergency User',
+      phone: companyDetails.whatsAppNumber || '7989997015',
+      emergency_type: 'High-Priority Safety SOS',
+      location_lat: lat,
+      location_lng: lng,
+      address_text: `GPS Pin: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+      status: 'active',
+    }).then((res) => {
+      if (res.success) {
+        console.log('Emergency alert synced to Supabase PostgreSQL');
+      }
+    });
   };
 
   const getWhatsAppSosLink = () => {

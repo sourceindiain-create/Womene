@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "booking": {
+      "title": "ServiceBooking",
+      "description": "User requests for elder care, home help, food, travel companion, or agricultural tech assistance.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "clientName": { "type": "string" },
+        "phone": { "type": "string" },
+        "location": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "assigned", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["serviceType", "clientName", "phone", "location", "status", "createdAt"]
+    },
+    "emergencyAlert": {
+      "title": "EmergencySosAlert",
+      "description": "High-priority emergency alerts triggered by users in distress.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userName": { "type": "string" },
+        "phone": { "type": "string" },
+        "emergencyType": { "type": "string" },
+        "locationLat": { "type": "number" },
+        "locationLng": { "type": "number" },
+        "addressText": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "dispatched", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userName", "phone", "emergencyType", "status", "createdAt"]
+    },
+    "aiConsultation": {
+      "title": "AiDoctorConsultation",
+      "description": "Logged triage and consultations from the 6 AI Doctor categories.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "doctorCategory": { "type": "string", "enum": ["human", "animal", "bird", "plant", "crop", "soil"] },
+        "symptoms": { "type": "string" },
+        "language": { "type": "string" },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["doctorCategory", "symptoms", "language", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/serviceBookings/{bookingId}": {
+      "schema": { "$ref": "#/entities/booking" },
+      "description": "Collection of all community service booking inquiries."
+    },
+    "/emergencyAlerts/{alertId}": {
+      "schema": { "$ref": "#/entities/emergencyAlert" },
+      "description": "Collection of emergency SOS alert dispatches."
+    },
+    "/aiConsultations/{consultationId}": {
+      "schema": { "$ref": "#/entities/aiConsultation" },
+      "description": "Collection of AI Doctor and Agri Doctor consultation logs."
+    }
+  }
+}

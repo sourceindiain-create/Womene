@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidBooking(data) {
+      return data.keys().hasAll(['serviceType', 'clientName', 'phone', 'location', 'status', 'createdAt'])
+        && data.serviceType is string && data.serviceType.size() > 0 && data.serviceType.size() <= 100
+        && data.clientName is string && data.clientName.size() > 0 && data.clientName.size() <= 100
+        && data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 20
+        && data.location is string && data.location.size() > 0 && data.location.size() <= 200
+        && data.status in ['pending', 'confirmed', 'assigned', 'completed', 'cancelled']
+        && data.createdAt is string;
+    }
+
+    function isValidEmergencyAlert(data) {
+      return data.keys().hasAll(['userName', 'phone', 'emergencyType', 'status', 'createdAt'])
+        && data.userName is string && data.userName.size() > 0 && data.userName.size() <= 100
+        && data.phone is string && data.phone.size() >= 7 && data.phone.size() <= 20
+        && data.emergencyType is string && data.emergencyType.size() > 0 && data.emergencyType.size() <= 100
+        && data.status in ['active', 'dispatched', 'resolved']
+        && data.createdAt is string;
+    }
+
+    function isValidAiConsultation(data) {
+      return data.keys().hasAll(['doctorCategory', 'symptoms', 'language', 'createdAt'])
+        && data.doctorCategory in ['human', 'animal', 'bird', 'plant', 'crop', 'soil']
+        && data.symptoms is string && data.symptoms.size() > 0 && data.symptoms.size() <= 2000
+        && data.language in ['en', 'te', 'hi']
+        && data.createdAt is string;
+    }
+
+    match /serviceBookings/{bookingId} {
+      allow read: if true;
+      allow create: if isValidBooking(request.resource.data);
+      allow update: if isValidBooking(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /emergencyAlerts/{alertId} {
+      allow read: if true;
+      allow create: if isValidEmergencyAlert(request.resource.data);
+      allow update: if isValidEmergencyAlert(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /aiConsultations/{consultationId} {
+      allow read: if true;
+      allow create: if isValidAiConsultation(request.resource.data);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

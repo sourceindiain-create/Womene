@@ -17,6 +17,8 @@ import {
 import { Language, ServiceItem, ServiceCategory } from '../types';
 import { translations } from '../translations';
 import { servicesData, companyDetails } from '../data/servicesData';
+import { saveBookingToFirestore } from '../lib/firebase';
+import { saveBookingToSupabase } from '../lib/supabase';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -68,6 +70,42 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       });
       setBookingSubmitted(true);
       setStep(5);
+
+      // Save to Firebase Firestore & Supabase PostgreSQL (Dual Cloud Sync)
+      saveBookingToFirestore({
+        serviceType: `${selectedServiceTitle} (${selectedCategory})`,
+        clientName: fullName.trim(),
+        phone: phone.trim(),
+        location: `${city}, ${address}`.trim(),
+        date: serviceDate || new Date().toISOString().split('T')[0],
+        time: serviceTime,
+        notes: notes || 'Standard request',
+        status: 'confirmed',
+        createdAt: new Date().toISOString(),
+      }).then((res) => {
+        if (res.success) {
+          console.log('Booking saved to Firestore with ID:', res.id);
+        }
+      });
+
+      saveBookingToSupabase({
+        booking_code: `WOM-${Math.floor(1000 + Math.random() * 9000)}`,
+        category: selectedCategory,
+        service_type: selectedServiceTitle,
+        client_name: fullName.trim(),
+        phone: phone.trim(),
+        city: city.trim(),
+        address: address.trim(),
+        service_date: serviceDate || new Date().toISOString().split('T')[0],
+        service_time: serviceTime,
+        mode: serviceMode as 'offline' | 'online',
+        notes: notes || 'Standard request',
+        status: 'confirmed',
+      }).then((res) => {
+        if (res.success) {
+          console.log('Booking synced to Supabase PostgreSQL');
+        }
+      });
       return;
     }
     setStep(s => Math.min(s + 1, 5));

@@ -16,6 +16,8 @@ import { FlutterMobileStudioModal } from './components/FlutterMobileStudioModal'
 import { AiLibraryModal } from './components/AiLibraryModal';
 import { Language, UserProfile, ServiceItem } from './types';
 import { companyDetails } from './data/servicesData';
+import { testFirebaseConnection } from './lib/firebase';
+import { isSupabaseConfigured } from './lib/supabase';
 import { 
   Bot, 
   ShieldAlert, 
@@ -46,13 +48,15 @@ export default function App() {
   const [selectedServiceToBook, setSelectedServiceToBook] = useState<ServiceItem | null>(null);
   const [activeSection, setActiveSection] = useState('hero');
 
-  // Check if initial visit to prompt front login or allow direct guest access
+  // Check if initial visit and test Firebase connection
   useEffect(() => {
     const hasVisited = localStorage.getItem('womene_visited');
     if (!hasVisited) {
       setIsLoginOpen(true);
       localStorage.setItem('womene_visited', 'true');
     }
+    // Test Firebase Firestore connection
+    testFirebaseConnection();
   }, []);
 
   const handleServiceSelect = (service: ServiceItem) => {
@@ -77,33 +81,47 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-purple-200 selection:text-purple-900">
       
-      {/* Persistent Guest Mode / Member Access Status Notice Bar */}
-      {user.isGuest && (
-        <div className="bg-purple-100/90 border-b border-purple-200 py-1.5 px-4 text-xs text-purple-950 font-medium">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-purple-700" />
-              <span>
-                <strong>{language === 'te' ? 'గెస్ట్ మోడ్ డైరెక్ట్ యాక్సెస్:' : language === 'hi' ? 'गेस्ट मोड डायरेक्ट एक्सेस:' : 'Guest Mode Active:'}</strong>{' '}
-                {language === 'te' 
-                  ? 'మీరు వెబ్‌సైట్‌లోని అన్ని సేవలు, AI డాక్టర్, బ్రాంచీలు మరియు బుకింగ్ నేరుగా ఉపయోగించవచ్చు.' 
-                  : language === 'hi' 
-                  ? 'आप सभी सेवाएं, AI डॉक्टर, शाखाएं व बुकिंग सीधे उपयोग कर सकते हैं।' 
-                  : 'Full direct access enabled for all services, AI Doctor, branch directory & bookings.'}
-              </span>
-            </div>
+      {/* Top Status Notice Bar with Firebase Cloud Indicator */}
+      <div className="bg-purple-950 text-purple-200 py-1.5 px-4 text-xs">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <UserCheck className="w-3.5 h-3.5 text-pink-400" />
+            <span>
+              <strong>{user.isGuest ? (language === 'te' ? 'గెస్ట్ యాక్సెస్' : language === 'hi' ? 'गेस्ट एक्सेस' : 'Guest Access') : user.name}:</strong>{' '}
+              {language === 'te' 
+                ? 'సేవలు, AI డాక్టర్ & బుకింగ్స్ నేరుగా ఉపయోగించవచ్చు.' 
+                : language === 'hi' 
+                ? 'सभी सेवाएं, AI डॉक्टर व बुकिंग्स सीधे सक्रिय हैं।' 
+                : 'Full direct access enabled for all services, AI Doctor, and bookings.'}
+            </span>
+          </div>
 
-            <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-800/80 text-[11px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>🔥 Firebase Active</span>
+            </span>
+
+            <span className="inline-flex items-center gap-1.5 bg-cyan-950/80 text-cyan-300 px-2 py-0.5 rounded-md border border-cyan-800/80 text-[11px] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+              <span>⚡ Supabase {isSupabaseConfigured() ? 'Active' : 'Ready'}</span>
+            </span>
+
+            <span className="hidden sm:inline-flex items-center gap-1 bg-slate-900/90 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700 text-[11px] font-semibold">
+              <span>▲ Vercel Ready</span>
+            </span>
+
+            {user.isGuest && (
               <button
                 onClick={() => setIsLoginOpen(true)}
-                className="text-purple-800 hover:text-purple-950 underline font-bold"
+                className="text-pink-300 hover:text-white underline font-semibold text-[11px] ml-1"
               >
-                {language === 'te' ? 'ఖాతా ద్వారా లాగిన్ అవ్వండి' : language === 'hi' ? 'सदस्य लॉगिन' : 'Switch to Member Login'}
+                {language === 'te' ? 'లాగిన్' : language === 'hi' ? 'सदस्य लॉगिन' : 'Member Login'}
               </button>
-            </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* Navigation Header */}
       <Navbar

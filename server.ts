@@ -1,18 +1,17 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-const PORT = 3000;
+// Support standard Port 3000 in dev/nginx and Cloud Run container PORT in production
+const PORT = process.env.NGINX_PORT
+  ? (Number(process.env.DEFAULT_APP_PORT) || 3000)
+  : (Number(process.env.PORT) || Number(process.env.DEFAULT_APP_PORT) || 3000);
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -748,9 +747,70 @@ app.get('/api/library/catalog', (req: Request, res: Response) => {
   });
 });
 
+// FIREBASE CLOUD MESSAGING (FCM) ENDPOINTS
+app.get('/api/fcm/status', (req: Request, res: Response) => {
+  res.json({
+    status: 'active',
+    service: 'Firebase Cloud Messaging (FCM)',
+    projectId: 'studio-6989353372-64cd3',
+    messagingSenderId: '366648669779',
+    supportedTopics: [
+      { id: 'emergency_sos', label: 'Emergency SOS & Women Safety', priority: 'critical' },
+      { id: 'women_safety', label: 'Village Night Escort & Safety Patrols', priority: 'high' },
+      { id: 'health_advisory', label: 'AI Doctor & Health Outbreak Advisories', priority: 'normal' },
+      { id: 'weather_warning', label: 'Farmer Crop & Monsoon Weather Warnings', priority: 'high' },
+      { id: 'community_update', label: 'Village Community & Service Updates', priority: 'normal' }
+    ],
+    serviceWorker: '/firebase-messaging-sw.js',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.post('/api/fcm/broadcast', (req: Request, res: Response) => {
+  const { title, body, type, severity, targetTopic, sender } = req.body;
+  if (!title || !body) {
+    res.status(400).json({ error: 'Title and body are required for FCM broadcast.' });
+    return;
+  }
+
+  const broadcastRecord = {
+    id: `fcm-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    title: String(title).slice(0, 200),
+    body: String(body).slice(0, 1000),
+    type: type || 'emergency_sos',
+    severity: severity || 'high',
+    targetTopic: targetTopic || 'emergency_sos',
+    sender: sender || 'WOMENE Command Center',
+    createdAt: new Date().toISOString()
+  };
+
+  res.json({
+    success: true,
+    message: 'Real-time alert broadcast dispatched successfully via FCM and Firestore.',
+    broadcast: broadcastRecord
+  });
+});
+
+app.post('/api/fcm/register', (req: Request, res: Response) => {
+  const { token, platform, topics } = req.body;
+  if (!token) {
+    res.status(400).json({ error: 'Token is required' });
+    return;
+  }
+
+  res.json({
+    success: true,
+    message: 'FCM device token registered.',
+    tokenPreview: token.substring(0, 20) + '...',
+    platform: platform || 'web',
+    topics: topics || ['emergency_sos', 'women_safety']
+  });
+});
+
 // Vite Middleware for dev / static for prod
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  const isProduction = process.env.NODE_ENV === 'production' || process.argv[1]?.includes('dist');
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

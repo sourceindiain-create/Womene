@@ -29,6 +29,24 @@ service cloud.firestore {
         && data.createdAt is string;
     }
 
+    function isValidFcmToken(data) {
+      return data.keys().hasAll(['token', 'platform', 'status', 'createdAt', 'lastActive'])
+        && data.token is string && data.token.size() > 0 && data.token.size() <= 500
+        && data.platform in ['web', 'android', 'ios']
+        && data.status in ['active', 'inactive']
+        && data.createdAt is string
+        && data.lastActive is string;
+    }
+
+    function isValidFcmBroadcast(data) {
+      return data.keys().hasAll(['title', 'body', 'type', 'severity', 'createdAt'])
+        && data.title is string && data.title.size() > 0 && data.title.size() <= 200
+        && data.body is string && data.body.size() > 0 && data.body.size() <= 1000
+        && data.type in ['emergency_sos', 'women_safety', 'health_advisory', 'weather_warning', 'community_update']
+        && data.severity in ['critical', 'high', 'normal']
+        && data.createdAt is string;
+    }
+
     match /serviceBookings/{bookingId} {
       allow read: if true;
       allow create: if isValidBooking(request.resource.data);
@@ -46,6 +64,20 @@ service cloud.firestore {
     match /aiConsultations/{consultationId} {
       allow read: if true;
       allow create: if isValidAiConsultation(request.resource.data);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    match /fcmTokens/{tokenId} {
+      allow read: if true;
+      allow create: if isValidFcmToken(request.resource.data);
+      allow update: if isValidFcmToken(request.resource.data);
+      allow delete: if false;
+    }
+
+    match /fcmBroadcasts/{broadcastId} {
+      allow read: if true;
+      allow create: if isValidFcmBroadcast(request.resource.data);
       allow update: if false;
       allow delete: if false;
     }

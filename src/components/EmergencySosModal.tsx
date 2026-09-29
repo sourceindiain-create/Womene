@@ -17,6 +17,7 @@ import { translations } from '../translations';
 import { companyDetails } from '../data/servicesData';
 import { saveEmergencyAlertToFirestore } from '../lib/firebase';
 import { saveEmergencyAlertToSupabase } from '../lib/supabase';
+import { dispatchFcmBroadcast } from '../lib/fcm';
 
 interface EmergencySosModalProps {
   isOpen: boolean;
@@ -102,6 +103,20 @@ export const EmergencySosModal: React.FC<EmergencySosModalProps> = ({
     }).then((res) => {
       if (res.success) {
         console.log('Emergency alert synced to Supabase PostgreSQL');
+      }
+    });
+
+    // Real-Time Firebase Cloud Messaging (FCM) Push Broadcast
+    dispatchFcmBroadcast({
+      title: '🚨 CRITICAL: Women Safety SOS Emergency Triggered',
+      body: `Live SOS activated near coordinates (${lat.toFixed(4)}, ${lng.toFixed(4)}). Nearby coordinators alerted!`,
+      type: 'emergency_sos',
+      severity: 'critical',
+      targetTopic: 'emergency_sos',
+      sender: 'WOMENE Instant SOS Dispatch',
+    }).then((res) => {
+      if (res.success) {
+        console.log('FCM real-time push broadcast triggered across network.');
       }
     });
   };

@@ -25,6 +25,17 @@
      - **Firebase Firestore**: `ai-studio-womenepeoplenear-df1f2517-18a3-44e6-90a8-494efbfb1833` (Active & Secured).
      - **Supabase PostgreSQL**: Ready with schema in `src/db/supabase_schema.sql` (RLS policies, UUID primary keys, and high-speed indexes).
 
+2. **Firebase Cloud Messaging (FCM) Real-Time Alert Engine**:
+   - **Service Worker (`public/firebase-messaging-sw.js`)**: Background push notification receiver with high-priority vibration patterns and action handlers.
+   - **Client FCM Hub (`src/lib/fcm.ts` & `src/components/FcmAlertsCenter.tsx`)**:
+     - Browser push notification permission management & device token registration.
+     - Dual-mode delivery: Native Web Push + real-time Firestore stream (`fcmBroadcasts`) for guaranteed real-time dispatch across all devices.
+     - Web Audio API synthesizer for emergency sirens, advisory beeps, and gentle chimes.
+     - Multi-topic subscription (Emergency SOS, Women Night Escort, Farmer Weather Advisories, Health Outbreak Alerts).
+     - Live broadcast dispatcher form with instant test simulation.
+   - **Backend FCM Gateway**: REST endpoints on Node.js (`server.ts`) and Vercel serverless (`/api/fcm/broadcast.ts`, `/api/fcm/status.ts`).
+   - **Firestore Collections**: `/fcmTokens` (device registrations) and `/fcmBroadcasts` (dispatched alerts).
+
 ---
 
 ## ⚡ Vercel Deployment Guide

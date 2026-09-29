@@ -16,7 +16,8 @@ import {
   Sparkles,
   Layers,
   Smartphone,
-  BookOpen
+  BookOpen,
+  BellRing
 } from 'lucide-react';
 import { Language, UserProfile } from '../types';
 import { translations } from '../translations';
@@ -33,6 +34,7 @@ interface NavbarProps {
   onOpenPosters: () => void;
   onOpenFlutterStudio: () => void;
   onOpenLibrary: () => void;
+  onOpenFcmAlerts?: () => void;
   activeSection: string;
   setActiveSection: (sec: string) => void;
 }
@@ -48,6 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenPosters,
   onOpenFlutterStudio,
   onOpenLibrary,
+  onOpenFcmAlerts,
   activeSection,
   setActiveSection,
 }) => {
@@ -237,6 +240,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             </div>
 
+            {/* FCM Real-Time Emergency Alerts Button */}
+            <button
+              onClick={onOpenFcmAlerts}
+              className="relative p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all flex items-center justify-center"
+              title="Firebase Cloud Messaging (FCM) & Emergency Alerts Hub"
+            >
+              <BellRing className="w-4 h-4 text-rose-600 animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full animate-ping" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-600 rounded-full" />
+            </button>
+
             {/* Emergency SOS Button */}
             <button
               onClick={onOpenEmergency}
@@ -384,6 +398,16 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           <div className="pt-2 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (onOpenFcmAlerts) onOpenFcmAlerts();
+              }}
+              className="w-full py-2.5 bg-rose-50 border border-rose-200 text-rose-800 text-center font-bold text-xs rounded-xl shadow-xs flex items-center justify-center gap-2"
+            >
+              <BellRing className="w-4 h-4 text-rose-600 animate-pulse" />
+              <span>FCM Emergency & Push Alerts Hub</span>
+            </button>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

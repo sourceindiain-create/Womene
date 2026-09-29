@@ -14,10 +14,12 @@ import { PostersGalleryModal } from './components/PostersGalleryModal';
 import { AiAssistantDrawer } from './components/AiAssistantDrawer';
 import { FlutterMobileStudioModal } from './components/FlutterMobileStudioModal';
 import { AiLibraryModal } from './components/AiLibraryModal';
+import { FcmAlertsCenter } from './components/FcmAlertsCenter';
 import { Language, UserProfile, ServiceItem } from './types';
 import { companyDetails } from './data/servicesData';
 import { testFirebaseConnection } from './lib/firebase';
 import { isSupabaseConfigured } from './lib/supabase';
+import { subscribeToRealtimeAlerts, FcmBroadcastPayload } from './lib/fcm';
 import { 
   Bot, 
   ShieldAlert, 
@@ -26,7 +28,10 @@ import {
   Sparkles,
   Phone,
   Smartphone,
-  BookOpen
+  BookOpen,
+  BellRing,
+  Radio,
+  X
 } from 'lucide-react';
 
 export default function App() {
@@ -45,10 +50,12 @@ export default function App() {
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isFlutterStudioOpen, setIsFlutterStudioOpen] = useState(false);
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [isFcmAlertsOpen, setIsFcmAlertsOpen] = useState(false);
+  const [activeBroadcastToast, setActiveBroadcastToast] = useState<FcmBroadcastPayload | null>(null);
   const [selectedServiceToBook, setSelectedServiceToBook] = useState<ServiceItem | null>(null);
   const [activeSection, setActiveSection] = useState('hero');
 
-  // Check if initial visit and test Firebase connection
+  // Check if initial visit and test Firebase connection + FCM alert listener
   useEffect(() => {
     const hasVisited = localStorage.getItem('womene_visited');
     if (!hasVisited) {
@@ -57,6 +64,21 @@ export default function App() {
     }
     // Test Firebase Firestore connection
     testFirebaseConnection();
+
+    // Subscribe to incoming real-time FCM & Firestore emergency alerts
+    const unsubscribeAlerts = subscribeToRealtimeAlerts((incomingAlert) => {
+      setActiveBroadcastToast(incomingAlert);
+      // Automatically auto-dismiss toast after 10 seconds if not critical
+      if (incomingAlert.severity !== 'critical') {
+        setTimeout(() => {
+          setActiveBroadcastToast((curr) => (curr?.id === incomingAlert.id ? null : curr));
+        }, 10000);
+      }
+    });
+
+    return () => {
+      unsubscribeAlerts();
+    };
   }, []);
 
   const handleServiceSelect = (service: ServiceItem) => {
@@ -102,6 +124,15 @@ export default function App() {
               <span>🔥 Firebase Active</span>
             </span>
 
+            <button
+              onClick={() => setIsFcmAlertsOpen(true)}
+              className="inline-flex items-center gap-1.5 bg-rose-950/90 hover:bg-rose-900/90 text-rose-300 px-2 py-0.5 rounded-md border border-rose-800/80 text-[11px] font-semibold transition cursor-pointer"
+              title="Open Firebase Cloud Messaging & Real-Time Alerts Hub"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>
+              <span>🚨 FCM Alerts</span>
+            </button>
+
             <span className="inline-flex items-center gap-1.5 bg-cyan-950/80 text-cyan-300 px-2 py-0.5 rounded-md border border-cyan-800/80 text-[11px] font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
               <span>⚡ Supabase {isSupabaseConfigured() ? 'Active' : 'Ready'}</span>
@@ -138,9 +169,52 @@ export default function App() {
         onOpenPosters={() => setIsPostersOpen(true)}
         onOpenFlutterStudio={() => setIsFlutterStudioOpen(true)}
         onOpenLibrary={() => setIsLibraryOpen(true)}
+        onOpenFcmAlerts={() => setIsFcmAlertsOpen(true)}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
       />
+
+      {/* Global Real-Time FCM Emergency Toast Banner */}
+      {activeBroadcastToast && (
+        <div className="bg-gradient-to-r from-rose-950 via-red-900 to-rose-950 border-b-2 border-rose-500 text-white px-4 py-2.5 shadow-xl transition-all animate-in slide-in-from-top duration-300 sticky top-0 z-40">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-rose-500/30 rounded-xl border border-rose-400/50 text-white animate-pulse shrink-0">
+                <Radio className="w-5 h-5 text-rose-300 animate-spin" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-rose-500 text-white font-extrabold text-[10px] px-2 py-0.5 rounded uppercase tracking-wider">
+                    {activeBroadcastToast.severity} ALERT
+                  </span>
+                  <span className="font-bold text-xs sm:text-sm text-white">
+                    {activeBroadcastToast.title}
+                  </span>
+                </div>
+                <p className="text-xs text-rose-200 mt-0.5 line-clamp-1">
+                  {activeBroadcastToast.body}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button
+                onClick={() => setIsFcmAlertsOpen(true)}
+                className="px-3 py-1 bg-white hover:bg-rose-100 text-rose-950 text-xs font-bold rounded-lg transition shadow-xs"
+              >
+                View Details
+              </button>
+              <button
+                onClick={() => setActiveBroadcastToast(null)}
+                className="p-1 text-rose-300 hover:text-white rounded-lg transition"
+                title="Dismiss"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Sections */}
       <main>
@@ -336,6 +410,12 @@ export default function App() {
       <AiLibraryModal
         isOpen={isLibraryOpen}
         onClose={() => setIsLibraryOpen(false)}
+        language={language}
+      />
+
+      <FcmAlertsCenter
+        isOpen={isFcmAlertsOpen}
+        onClose={() => setIsFcmAlertsOpen(false)}
         language={language}
       />
 

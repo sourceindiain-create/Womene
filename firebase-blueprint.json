@@ -48,6 +48,38 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["doctorCategory", "symptoms", "language", "createdAt"]
+    },
+    "fcmToken": {
+      "title": "FcmDeviceToken",
+      "description": "FCM device registration tokens for push notifications and emergency dispatch.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "token": { "type": "string", "maxLength": 500 },
+        "platform": { "type": "string", "enum": ["web", "android", "ios"] },
+        "userAgent": { "type": "string", "maxLength": 500 },
+        "topics": { "type": "string", "maxLength": 200 },
+        "status": { "type": "string", "enum": ["active", "inactive"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["token", "platform", "status", "createdAt", "lastActive"]
+    },
+    "fcmBroadcast": {
+      "title": "FcmBroadcastNotification",
+      "description": "Real-time push alerts, emergency broadcasts, and community updates dispatched to users.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "body": { "type": "string", "maxLength": 1000 },
+        "type": { "type": "string", "enum": ["emergency_sos", "women_safety", "health_advisory", "weather_warning", "community_update"] },
+        "severity": { "type": "string", "enum": ["critical", "high", "normal"] },
+        "targetTopic": { "type": "string", "maxLength": 100 },
+        "sender": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "body", "type", "severity", "createdAt"]
     }
   },
   "firestore": {
@@ -62,6 +94,14 @@
     "/aiConsultations/{consultationId}": {
       "schema": { "$ref": "#/entities/aiConsultation" },
       "description": "Collection of AI Doctor and Agri Doctor consultation logs."
+    },
+    "/fcmTokens/{tokenId}": {
+      "schema": { "$ref": "#/entities/fcmToken" },
+      "description": "Collection of registered FCM device push tokens."
+    },
+    "/fcmBroadcasts/{broadcastId}": {
+      "schema": { "$ref": "#/entities/fcmBroadcast" },
+      "description": "Collection of emergency broadcasts and real-time updates."
     }
   }
 }
